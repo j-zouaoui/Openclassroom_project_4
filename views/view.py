@@ -30,12 +30,22 @@ class View:
         self.buttons = {}
         self.comboboxes = {}
 
-    def create_entry(self, container, label, X, Y):
-        self.label = ttk.Label(container, text=label).place(x=X, y=Y)
-        text = tk.StringVar()
-        self.entries_value = ttk.Entry(container, textvariable=text, width=50).place(x=X+200, y=Y)
-        return text
+    def create_tree(self, container, X, Y):
+        columns = ('#1', '#2', '#3', )
+        self.tree = ttk.Treeview(container, columns=columns, show='headings')
+        self.tree.place(x=X, y=Y)
+        # define headings
+        self.tree.heading('#1', text='#')
+        self.tree.heading('#2', text='White')
+        self.tree.heading('#3', text='Black')
 
+    def create_entry(self, container, label, state, X, Y):
+        self.label = ttk.Label(container, text=label)
+        self.label.place(x=X, y=Y)
+        text = tk.StringVar()
+        self.entries_value = ttk.Entry(container, textvariable=text, state=state, width=30, justify='center')
+        self.entries_value.place(x=X+150, y=Y)
+        return [self.label, self.entries_value]
 
     def create_button(self, frame, name, X, Y):
         self.buttons = ttk.Button(frame, text = name)
@@ -73,6 +83,7 @@ class View:
         self.tournament_cb['values'] = data
         self.tournament_cb['state'] = 'readonly'  # normal
         self.tournament_cb.place(x=X+200, y=Y)
+        return self.tournament_cb
 
     def create_frame(self,frame, label, width,height, column, row):
 
