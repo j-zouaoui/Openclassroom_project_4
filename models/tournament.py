@@ -1,5 +1,5 @@
 import json
-import datetime
+from datetime import datetime
 
 
 
@@ -24,10 +24,10 @@ class Tournament:
 #tournees
 class Tour:
 
-    def __init__(self, name, date, time):
+    def __init__(self, name):
         self.tour_name = name
-        self.tour_date = date
-        self.tour_time = time
+        self.tour_date = datetime.now().date()
+        self.tour_time = datetime.now().time().isoformat(timespec='seconds')
         self.tour_match_list = []
         self.match_name_list = []
         self.match_result = []

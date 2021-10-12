@@ -2,12 +2,11 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.messagebox import showinfo
 from typing import List
-from waiting import wait
-import time
 
 from views.view import View
 from models.tournament import Tournament, Tour
 from models.players import Player
+from models.dataBase import data_base
 
 class Controller:
     """Main controller"""
@@ -26,18 +25,18 @@ class Controller:
     def create_round_data_view(self, round_name, data: List, command):
         player_full_name = data
         self.label_entry_list = []
-        self.round = Tour(round_name, None, None)
+        self.round = Tour(round_name)
 
         # remove the previous frame
         self.new_frame.destroy()
 
         # trounament data frame
-        self.new_player_frame = self.view.create_frame(self.view.root, round_name, 600, 400, 1, 0)
+        self.new_frame = self.view.create_frame(self.view.root, round_name, 600, 400, 1, 0)
 
         # creation of match frame
         match_frame_list = self.round.creating_match_list()
         for i in range(4):
-            match_frame_list[i] = self.view.create_frame(self.new_player_frame, "match {}".format(i + 1), 600, 100, 1, i)
+            match_frame_list[i] = self.view.create_frame(self.new_frame, "match {}".format(i + 1), 600, 100, 1, i)
 
         # creation of match bracket :
         # creation of label_entry variable
@@ -83,7 +82,63 @@ class Controller:
             j += 2
         print(self.round.match_result)
         self.rounds.append(self.round)
+        print("round saved data", self.round.__dict__)
         return self.rounds
+
+
+    #create a tournoi report
+    def tournois_data_view(self):
+        columnlist = ['tournois name', 'tounois place', 'tournois date', 'tour number']
+        self.new_frame.destroy()
+        self.new_frame = self.view.create_frame(self.view.root, "rapport", 600, 400, 1, 0)
+        data =[]
+        for tournament in self.trounament:
+            #retrive attrebute of tournament object
+            list = tournament.__dict__
+            intermidate_data = []
+            for key,var in list.items():
+                intermidate_data.append(var)
+            del intermidate_data[-1]
+            data.append(intermidate_data)
+
+        self.treeviews_tournois_data = self.view.create_treeview(self.new_frame, data, columnlist, 10, 10)
+
+    # create a player report
+    def players_data_view(self):
+        columnlist = ['first name', 'last name', 'birthday', 'gender', 'score']
+        self.new_frame.destroy()
+        self.new_frame = self.view.create_frame(self.view.root, "rapport", 600, 400, 1, 0)
+        data =[]
+        for player in self.players:
+            #retrive attrebute of tournament object
+            list = player.__dict__
+            intermidate_data = []
+            for key,var in list.items():
+                intermidate_data.append(var)
+
+            data.append(intermidate_data)
+
+        self.treeviews_tournois_data = self.view.create_treeview(self.new_frame, data, columnlist, 10, 10)
+
+    #creating round report
+    def round_data_view(self):
+        """columnlist = ['match name', 'player 1', 'score', 'player 2', 'score']
+        self.new_frame.destroy()
+        self.new_frame = self.view.create_frame(self.view.root, "rapport", 600, 400, 1, 0)
+        data =[]
+        for match in self.rounds:
+            #retrive attrebute of tournament object
+            list = match.get_player_round_resutl()
+            intermidate_data = []
+            for result in list:
+                intermidate_data.append(result[0])
+                intermidate_data.append(result[1])
+
+            data.append(intermidate_data)
+
+        self.treeviews_tournois_data = self.view.create_treeview(self.new_frame, data, columnlist, 10, 10)"""
+        pass
+
 
     def sort_players_results(self):
         #gothering data
@@ -170,6 +225,7 @@ class Controller:
 
         return self.bracket_for_next_round
 
+    #sortted round 4 results
     def tournament_final_result(self):
         self.sort_players_results()
         lastround = self.rounds[-1]
@@ -182,6 +238,7 @@ class Controller:
 
             print("number of round:", len(self.rounds))
             print("result of {} : ".format(round_item.tour_name),round_item.get_player_round_resutl())
+            print("match reseults:", round_item.match_result)
 
         print("***************************************fin des result***********************************")
         print("****************************************************************************************")
@@ -197,12 +254,25 @@ class Controller:
         print("****************************************************************************************")
         print("******************************cumul de result*******************************************")
         print(last_player_round_result)
+        # trounament report button
+        tounois_list_button = self.view.create_button(self.menu_frame, "Tounois_list", 20, 110)
+        tounois_list_button.configure(command=lambda: self.tournois_data_view())
 
+        # player report button
+        player_list_button = self.view.create_button(self.menu_frame, "Player_list", 20, 140)
+        player_list_button.configure(command=lambda: self.players_data_view())
+
+        # round report button
+        round_list_button = self.view.create_button(self.menu_frame, "tour_list", 20, 170)
+        round_list_button.configure(command=lambda: self.round_data_view())
+
+    #create round 4
     def round_4_data_view(self):
         print("#################################_Round_4#######################################################")
         self.sort_players_results()
         self.create_round_data_view("Round_4", self.creating_round_bracket(), self.tournament_final_result)
 
+    #create round 3
     def round_3_data_view(self):
         print("#################################_Round_3#######################################################")
         self.sort_players_results()
@@ -249,9 +319,30 @@ class Controller:
         last_name = self.last_name[1].get()
         birthday_date = self.birthday_date[1].get()
         gender = self.gender.get()
-        rate = int(self.rate[1].get())
-        player = Player(first_name, last_name, birthday_date, gender, rate)
-        self.players.append(player)
+        rate_isnot_integer = True
+        rate = self.rate[1].get()
+
+        #check empty field
+        if first_name == '' or last_name == '' or birthday_date == '' or gender == 'None' or rate == '' or type(rate) != int:
+            value = False
+        else :
+            value = True
+        if value:
+            player = Player(first_name, last_name, birthday_date, gender, rate)
+            self.players.append(player)
+            print("attribute of player:", player.__dict__ )
+
+            showinfo("","Player data has been saved")
+            self.first_name[1].delete(0, 'end')
+            self.last_name[1].delete(0, 'end')
+            self.birthday_date[1].delete(0, 'end')
+            self.gender.set(None)
+            self.rate[1].delete(0, 'end')
+        else:
+            if first_name == '' or last_name == '' or birthday_date == '' or gender == 'None' or rate == '':
+                showinfo(message='fields are empty')
+            else:
+                showinfo(message='score should be an integer')
 
         if len(self.players) >= 8:
             showinfo("message","Le nombre maximal est attend./"
@@ -260,8 +351,10 @@ class Controller:
             round_button = self.view.create_button(self.menu_frame, "tours", 20, 80)
             round_button.configure(command=lambda: self.round_1_data_view())
 
-        for player in self.players :
-            print(player.toJson())
+        if len(self.players) == 8:
+            for player in self.players :
+                self.plyers_db_table.insert(player.toJson())
+                print(player.toJson())
 
     # creaetion of player entry of a selected tournament
     def player_data_entry(self, event=None):
@@ -301,10 +394,29 @@ class Controller:
         palce = self.place[1].get()
         date = self.date[1].get()
         number_of_round = self.number_of_round[1].get()
-        self.tournament_1 = Tournament(name, palce, date, number_of_round)
-        self.trounament.append(self.tournament_1)
-        self.tournament_name.append (name)
-        print(self.tournament_1.toJson())
+        if name == '' or palce == '' or date == '':
+            value = False
+        else :
+            value = True
+        if value:
+            self.tournament_1 = Tournament(name, palce, date, number_of_round)
+            self.trounament.append(self.tournament_1)
+            self.tournament_name.append (name)
+            #show information about the creation of the tournament
+            showinfo("", "le tournois {} été crée". format(name))
+
+            #clear entry widgets
+            self.name[1].delete(0,'end')
+            self.place[1].delete(0,'end')
+            self.date[1].delete(0,'end')
+
+            #insert tournament data to data base
+            self.tournament_db_table.insert(self.tournament_1.toJson())
+
+            #code used only for check. it will be removed at the end rev
+            print(self.tournament_1.toJson())
+        else:
+            showinfo(message='fields are empty')
 
     # creation of tournament data view
     def create_tournament_data_view(self):
@@ -337,10 +449,17 @@ class Controller:
         players_button = self.view.create_button(self.menu_frame, "Joueurs", 20, 50)
         players_button.configure(command= self.create_player_data_view)
 
+        #creating a database
+        chess_database = data_base('chess_data_base')
+        chess_database.db_setup()
+        self.plyers_db_table = chess_database.db_create_table('players_table')
+        self.tournament_db_table = chess_database.db_create_table('tounament_table')
+
         self.view.main()
 
 
 if __name__ == "__main__":
+
     controller = Controller()
     vie = controller.create_main_view()
 

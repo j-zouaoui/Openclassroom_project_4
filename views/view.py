@@ -93,6 +93,26 @@ class View:
         new_frame.tkraise()
         return new_frame
 
+    def create_treeview(self,frame, data, columns_list, X, Y):
+        # columns
+        tree = ttk.Treeview(frame,  show='headings')
+        tree.place(x=X, y=Y)
+        tree['columns'] = columns_list
+        tree.column('#0', width=10)
+        tree.heading('#0', text='')
+        for i in range(len(columns_list)):
+            tree.column('#{}'.format(i+1), width=int(600/len(columns_list))-10, anchor='center')
+            tree.heading('#{}'.format(i+1), text=columns_list[i])
+        for item in data:
+            tree.insert('', tk.END, values=item)
+
+
+
+
+
+
+
+
     def main(self):
         self.root.mainloop()
 
